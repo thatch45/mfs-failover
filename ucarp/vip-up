@@ -1,0 +1,38 @@
+#!/bin/bash
+exec 2> /dev/null
+
+MFS='/var/lib/mfs'
+
+#Add the IP address
+ip addr add "$2"/16 dev "$1"
+
+RET=`echo $?`
+if [ "$RET" == "0" ]; then
+    #This indicates we've been running as a metalogger previously, we should recover from the change logs
+    if [ -e "$MFS/metadata_ml.mfs.back" -a -e "$MFS/sessions_ml.mfs" ]; then
+      #Stop the metalogger since we are becoming master
+      mfsmetalogger stop
+
+      #Restore from the metalogger change logs
+      mfsmetarestore -a 
+      if [ "$?" != "0" ]; then
+          #Unable to restore meta logs, not recovering...
+          exit 1
+      fi
+
+      mv -f $MFS/sessions_ml.mfs $MFS/sessions.mfs
+
+      #Remove old metalogger change logs
+      mkdir -p $MFS/metalogs
+      mv $MFS/*_ml* $MFS/metalogs
+    fi
+
+    if [ ! -e "$MFS/metadata.mfs" ]; then
+        #Creating new metadata.mfs file
+        echo -n "MFSM NEW" > $MFS/metadata.mfs
+    fi
+
+    #Start the master and cgi serv
+    mfsmaster start
+    service mfscgiserv start
+fi

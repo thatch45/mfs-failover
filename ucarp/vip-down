@@ -1,0 +1,20 @@
+#! /bin/sh
+exec 2> /dev/null
+
+MFS='/var/lib/mfs'
+
+RET=`echo $?`
+if [ "$RET" == "0" ]; then
+  #Stop master services
+  mfsmaster stop
+  service mfscgiserv stop
+fi
+
+#Remove the IP address
+ip addr del "$2"/16 dev "$1" 2> /dev/null
+
+mkdir -p $MFS/master
+mv $MFS/changelog.* $MFS/master
+mv $MFS/sessions.*  $MFS/master
+mv $MFS/metadata.*  $MFS/master
+mv $MFS/stats.mfs   $MFS/master
