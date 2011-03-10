@@ -1,0 +1,48 @@
+#!/bin/bash
+
+. /etc/rc.conf
+. /etc/rc.d/functions
+
+DAEMON="/usr/libexec/beyond/metaman.py"
+
+get_pid() {
+  ps aux | grep -v grep | grep $DAEMON | awk '{print $2}'
+}
+
+PID=$(get_pid)
+case "$1" in
+  start)
+    stat_busy "Starting MooseFS metalogger manager Daemon"
+    if [ -z "$PID" ]; then 
+       $DAEMON
+    fi
+    if [ ! -z "$PID" -o $? -gt 0 ]; then
+      stat_fail
+    else
+      PID=$(get_pid)
+      echo $PID > /var/run/metaman.pid
+      add_daemon metaman
+      stat_done
+    fi
+    ;;
+  stop)
+    stat_busy "Stopping MooseFS metalogger manager Daemon"
+    [ ! -z "$PID" ]  && kill $PID &> /dev/null
+    if [ $? -gt 0 ]; then
+      stat_fail
+    else
+      rm_daemon metaman
+      rm -f /var/run/metaman.pid
+      stat_done
+    fi
+    ;;
+  restart)
+    $0 stop
+    if [ ! -z $PID ]; then
+      while ps -p $PID > /dev/null; do sleep 1; done
+    fi
+    $0 start
+    ;;
+  *)
+    echo "usage: $0 {start|stop|restart}"  
+esac
