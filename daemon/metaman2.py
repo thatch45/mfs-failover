@@ -21,13 +21,14 @@ def daemonize():
         if pid > 0:
             # exit first parent
             sys.exit(0) 
-    except OSError as e:
+    except OSError, e: 
+        print >> sys.stderr, "fork #1 failed: %d (%s)" % (e.errno, e.strerror) 
         sys.exit(1)
 
     # decouple from parent environment
     os.chdir("/") 
     os.setsid() 
-    os.umask(0o22)
+    os.umask(022) 
 
     # do second fork
     try: 
@@ -35,10 +36,11 @@ def daemonize():
         if pid > 0:
             # print "Daemon PID %d" % pid 
             sys.exit(0) 
-    except OSError as e:
+    except OSError, e: 
+        print >> sys.stderr, "fork #2 failed: %d (%s)" % (e.errno, e.strerror) 
         sys.exit(1) 
 
-    dev_null = open('/dev/null','w') 
+    dev_null = open('/dev/null','rw') 
     os.dup2(dev_null.fileno(), sys.stdin.fileno()) 
     os.dup2(dev_null.fileno(), sys.stdout.fileno()) 
     os.dup2(dev_null.fileno(), sys.stderr.fileno()) 
