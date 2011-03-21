@@ -1,5 +1,5 @@
-#!/usr/bin/python3
-# Yes, python3
+#!/usr/bin/python2
+# Yes, python2
 '''
 A problem arises when a metalogger is used to recover data after multiple
 failovers, this daemon is intended to monitor failovers on the master daemon
